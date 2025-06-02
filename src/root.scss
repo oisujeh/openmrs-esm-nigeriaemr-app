@@ -1,0 +1,36 @@
+@use '@carbon/layout';
+@use '@carbon/type';
+
+.container {
+  padding: layout.$spacing-07;
+}
+
+.welcome {
+  @include type.type-style('heading-04');
+  margin: layout.$spacing-05 0;
+}
+
+.explainer {
+  margin-bottom: layout.$spacing-07;
+}
+
+.pageHeader {
+  border-bottom: 1px solid gray;
+}
+
+div[style*="justify-content: center"][style*="border-top: 1px solid rgb(224, 224, 224)"] {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+div[style*="justify-content: center"][style*="border-top: 1px solid rgb(224, 224, 224)"] .cds--fieldset {
+  text-align: center;
+}
+
+.custom-datepicker-label label.bx--label,
+.custom-datepicker-label label.cds--label {
+  color: white !important;
+}
+
+

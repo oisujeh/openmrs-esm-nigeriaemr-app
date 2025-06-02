@@ -1,0 +1,55 @@
+@import '~@openmrs/esm-styleguide/src/vars';
+
+.container :global(.bx--label),
+.container :global(.cds--label) {
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+:global {
+  // Unchecked checkbox: white border
+  .cds--checkbox:not(:checked) + .cds--checkbox-label::before {
+    background-color: white;
+    border-color: white;
+  }
+
+  // Checked checkbox: white box + white border
+  .cds--checkbox:checked + .cds--checkbox-label::before {
+    background-color: white;
+    border-color: white;
+  }
+
+  // Checkmark color (inside the box)
+  .cds--checkbox:checked + .cds--checkbox-label::after {
+    border-color: $ui-05; // Replace $ui-05 with a valid color or hex value
+  }
+
+  // Optional: consistent spacing for inputs
+  .cds--text-input {
+    margin-bottom: 1rem;
+  }
+
+  .cds--checkbox-label-text {
+    margin-bottom: 1rem;
+  }
+
+}
+
+.dateRangeContainer {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+// Optional: remove bottom margin from Carbon FormGroup inside grid for cleaner spacing
+.dateRangeContainer > .cds--form-item {
+  margin-bottom: 0;
+}
+
+
+
+
+
+

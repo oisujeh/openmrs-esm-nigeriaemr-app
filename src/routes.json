@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json.openmrs.org/routes.schema.json",
+  "backendDependencies": {
+    "webservices.rest": "^2.24.0"
+  },
+  "pages": [
+    {
+      "component": "root",
+      "route": "ndr-export"
+    }
+  ],
+  "extensions": [
+    {
+      "name": "extraction-dashboard",
+      "slot": "extraction-dashboard-slot",
+      "component": "root"
+    },
+    {
+      "name": "extraction-dashboard-link",
+      "slot": "homepage-dashboard-slot",
+      "component": "extractionDashboardLink",
+      "meta": {
+        "name": "extraction",
+        "slot": "extraction-dashboard-slot",
+        "title": "NDR Export"
+      }
+    }
+  ]
+}
