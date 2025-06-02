@@ -14,16 +14,6 @@
       "name": "extraction-dashboard",
       "slot": "extraction-dashboard-slot",
       "component": "root"
-    },
-    {
-      "name": "extraction-dashboard-link",
-      "slot": "homepage-dashboard-slot",
-      "component": "extractionDashboardLink",
-      "meta": {
-        "name": "extraction",
-        "slot": "extraction-dashboard-slot",
-        "title": "NDR Export"
-      }
     }
   ]
 }

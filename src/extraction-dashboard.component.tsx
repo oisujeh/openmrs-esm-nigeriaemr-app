@@ -38,7 +38,6 @@ const NDRExport: React.FC<NDRExportProps> = ({ lastNDRRunDate }) => {
     setToDate(lastNDRRunDate);
   }, [lastNDRRunDate]);
 
-  // API endpoints
   // API endpoints using buildActionUrl
   const API_ENDPOINTS = {
     getFileList: buildActionUrl('nigeriaemr', 'ndr', 'getFileList'),
@@ -54,7 +53,6 @@ const NDRExport: React.FC<NDRExportProps> = ({ lastNDRRunDate }) => {
     viewErrorLogs: buildActionUrl('nigeriaemr', 'ndr', 'viewErrorLogs'),
     generateNDRFile: buildOpenMRSActionUrl('nigeriaemr', 'ndr', 'generateNDRFile', true),
     generateCustomNDRFile: buildOpenMRSActionUrl('nigeriaemr', 'ndr', 'generateCustomNDRFile', true),
-
     auth: buildOpenMRSActionUrl('nigeriaemr', 'ndr', 'auth', true),
     reAuth: buildOpenMRSActionUrl('nigeriaemr', 'ndr', 'reAuth', true),
     checkAuth: buildOpenMRSActionUrl('nigeriaemr', 'ndr', 'checkAuth', true),
@@ -81,40 +79,25 @@ const NDRExport: React.FC<NDRExportProps> = ({ lastNDRRunDate }) => {
   const loadFileList = useCallback(
     async (showProgressDialog: boolean = true) => {
       if (showProgressDialog) setShowWaitDialog(true);
-
       try {
-        const url = custom
-          ? buildActionUrl('nigeriaemr', 'ndr', 'getManualFileList')
-          : buildActionUrl('nigeriaemr', 'ndr', 'getFileList');
-
+        const url = custom ? API_ENDPOINTS.getManualFileList : API_ENDPOINTS.getFileList;
         const response = await openmrsFetch(url);
-
         // Check if the data is a string that needs parsing
         let fileListData = response.data;
-
         if (typeof fileListData === 'string') {
           try {
             fileListData = JSON.parse(fileListData);
-            // eslint-disable-next-line no-console
-            console.log('Parsed JSON data:', fileListData);
           } catch (parseError) {
             console.error('Failed to parse JSON:', parseError);
             setFileList([]);
             return;
           }
         }
-
-        // eslint-disable-next-line no-console
-        console.log('Final fileListData:', fileListData);
-        // eslint-disable-next-line no-console
-        console.log('Is array after parsing?', Array.isArray(fileListData));
-
         if (!Array.isArray(fileListData)) {
           console.error('Data is still not an array after parsing:', typeof fileListData);
           setFileList([]);
           return;
         }
-
         const processingFiles = fileListData.filter((file: NDRFile) => !file.active || file.status === 'Processing');
 
         const hasProcessing = processingFiles.length > 0;
@@ -123,7 +106,6 @@ const NDRExport: React.FC<NDRExportProps> = ({ lastNDRRunDate }) => {
         setFileList(fileListData);
       } catch (error: any) {
         console.error('Error loading file list', error);
-
         if (error?.response?.status === 401) {
           alert('Unauthorized. Please log in again.');
         } else if (showProgressDialog) {
@@ -136,19 +118,19 @@ const NDRExport: React.FC<NDRExportProps> = ({ lastNDRRunDate }) => {
     [custom],
   );
 
-  // Initial load
+  // Initial load & when custom changes
   useEffect(() => {
     loadFileList();
-  }, [custom]);
+  }, [custom, loadFileList]);
 
-  // Auto refresh
+  // Auto refresh every 10s
   useEffect(() => {
     const interval = setInterval(() => {
       loadFileList(false);
     }, 10000);
 
     return () => clearInterval(interval);
-  }, [custom]);
+  }, [custom, loadFileList]);
 
   // Handle authentication
   const handleAuth = async (email: string, password: string) => {
@@ -188,7 +170,7 @@ const NDRExport: React.FC<NDRExportProps> = ({ lastNDRRunDate }) => {
 
         if (response.data) {
           alert('File deleted');
-          loadFileList();
+          await loadFileList();
         } else {
           alert('There was an error deleting file');
         }
@@ -201,28 +183,28 @@ const NDRExport: React.FC<NDRExportProps> = ({ lastNDRRunDate }) => {
   };
 
   const handleRestartFile = async (id: number) => {
-    if (
-      window.confirm(
-        'Are you sure you want to restart? This will delete your previous file and restart the export from the beginning',
-      )
-    ) {
-      setShowWaitDialog(true);
-      try {
-        // Use GET request with query parameters (matching the OpenMRS format)
-        const url = `${API_ENDPOINTS.restartFile}&id=${id}&action=none`;
-        const response = await axios.get(url);
+    const confirmed = window.confirm(
+      'Are you sure you want to restart? This will delete your previous file and restart the export from the beginning.',
+    );
+    if (!confirmed) return;
 
-        if (response.data) {
-          alert('Restart initiated');
-          loadFileList();
-        } else {
-          alert('There was an error restarting');
-        }
-      } catch (error) {
+    setShowWaitDialog(true);
+
+    try {
+      const url = `${API_ENDPOINTS.restartFile}&id=${id}&action=none`;
+      const response = await axios.get(url);
+
+      if (response.data) {
+        alert('Restart initiated');
+      } else {
         alert('There was an error restarting');
-      } finally {
-        setShowWaitDialog(false);
       }
+    } catch (error) {
+      console.error('Restart file error:', error);
+      alert('There was an error restarting');
+    } finally {
+      await loadFileList();
+      setShowWaitDialog(false);
     }
   };
 
@@ -240,13 +222,13 @@ const NDRExport: React.FC<NDRExportProps> = ({ lastNDRRunDate }) => {
 
         if (response.data) {
           alert('Resumed');
-          loadFileList();
         } else {
           alert('There was an error resuming');
         }
       } catch (error) {
         alert('There was an error resuming');
       } finally {
+        await loadFileList();
         setShowWaitDialog(false);
       }
     }
@@ -255,27 +237,21 @@ const NDRExport: React.FC<NDRExportProps> = ({ lastNDRRunDate }) => {
   const handlePauseFile = async (id: number) => {
     if (window.confirm('Are you sure you want to pause the process?')) {
       setShowWaitDialog(true);
-
-      if (id) {
-        try {
-          // API_ENDPOINTS.pauseFile already includes the successUrl
-          const url = `${API_ENDPOINTS.pauseFile}&id=${id}`;
-          const response = await axios.get(url);
-
-          if (response.data) {
-            alert('paused');
-            loadFileList();
-          } else {
-            alert('There was an error pausing the process');
-            loadFileList();
-          }
-        } catch (error: any) {
-          console.error('Pause file error:', error);
-          alert('There was an error stopping the process');
-          loadFileList();
-        } finally {
-          setShowWaitDialog(false);
+      try {
+        // API_ENDPOINTS.pauseFile already includes the successUrl
+        const url = `${API_ENDPOINTS.pauseFile}&id=${id}`;
+        const response = await axios.get(url);
+        if (response.data) {
+          alert('paused');
+        } else {
+          alert('There was an error pausing the process');
         }
+      } catch (error: any) {
+        console.error('Pause file error:', error);
+        alert('There was an error stopping the process');
+      } finally {
+        await loadFileList();
+        setShowWaitDialog(false);
       }
     }
   };
@@ -427,7 +403,10 @@ const NDRExport: React.FC<NDRExportProps> = ({ lastNDRRunDate }) => {
 
       <AuthDialog
         open={showAuthDialog}
-        onClose={() => setShowAuthDialog(false)}
+        onClose={() => {
+          setShowAuthDialog(false);
+          setExtractionOpt('xml'); // Revert to XML on close
+        }}
         onAuth={handleAuth}
         credentialsProvided={credentialsProvided}
       />
